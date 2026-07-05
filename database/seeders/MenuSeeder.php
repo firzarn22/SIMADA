@@ -11,7 +11,7 @@ class MenuSeeder extends Seeder
     {
         DB::table('menus')->insert([
             ['nama_menu' => 'Dashboard Utama', 'url' => '/dashboard'],
-            ['nama_menu' => 'LLA', 'url' => '#'],
+            ['nama_menu' => 'LLA', 'url' => '/lla'],
             ['nama_menu' => 'Bidang Perparkiran', 'url' => '#'],
             ['nama_menu' => 'Bidang Keselamatan', 'url' => '#'],
             ['nama_menu' => 'Bidang Sapras', 'url' => '#'],

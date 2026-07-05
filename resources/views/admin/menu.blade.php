@@ -10,7 +10,7 @@
             <input type="text" name="nama_menu" placeholder="Nama Menu (e.g. Lokasi Halte)" class="p-2 border rounded-lg" required>
             <input type="text" name="url" placeholder="URL (e.g. /lla/halte)" class="p-2 border rounded-lg" required>
             <select name="parent_id" class="p-2 border rounded-lg">
-                <option value="">-- Pilih Induk (LLA, dll) --</option>
+                <option value="">-- Pilih Menu Induk --</option>
                 @foreach($parents as $p)
                     <option value="{{ $p->id }}">{{ $p->nama_menu }}</option>
                 @endforeach

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LlaController;
 
 
+
 Route::get('/', function () {
     return view('login');
 });
