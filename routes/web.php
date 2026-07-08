@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LlaController;
-
+use App\Http\Controllers\DynamicTableController;
+use App\Http\Controllers\MenuController;
 
 
 Route::get('/', function () {
@@ -27,4 +28,16 @@ Route::post('/login', [LoginController::class, 'login']);
 // Proses Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// Jalur untuk menyimpan data pembuatan tabel dinamis baru
+Route::post('/dynamic-table/store', [DynamicTableController::class, 'store'])->name('dynamic-table.store');
 
+// Jalur untuk menampilkan isi tabel secara dinamis berdasarkan halaman sub-menu yang diklik
+Route::get('/dashboard/view-data/{menu_id}', [DynamicTableController::class, 'show'])->name('dynamic-table.show');
+
+Route::delete('/admin/menu/{id}', [MenuController::class, 'destroy'])
+    ->name('menu.destroy');
+
+    // Jalur untuk meng-update tabel dinamis yang sudah ada
+Route::put('/dynamic-table/update/{id}', [App\Http\Controllers\DynamicTableController::class, 'update'])->name('dynamic-table.update');
+// Jalur jika ingin menghapus seluruh tabel di halaman tersebut
+Route::delete('/dynamic-table/destroy/{id}', [App\Http\Controllers\DynamicTableController::class, 'destroyTable'])->name('dynamic-table.destroy');

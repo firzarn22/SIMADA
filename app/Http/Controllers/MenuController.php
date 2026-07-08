@@ -32,4 +32,19 @@ class MenuController extends Controller
 
         return back()->with('success', 'Menu ditambahkan!');
     }
+
+   public function destroy($id)
+{
+    $menu = Menu::findOrFail($id);
+
+    // Hapus semua submenu
+    Menu::where('parent_id', $menu->id)->delete();
+
+    // Hapus menu
+    $menu->delete();
+
+    return redirect()->route('menu.index')
+                     ->with('success', 'Menu berhasil dihapus.');
+}
+
 }

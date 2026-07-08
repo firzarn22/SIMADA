@@ -1,0 +1,263 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="max-w-6xl mx-auto" x-data="{
+    isEdit: false,
+    kolom: {{ $tableData ? $tableData->jumlah_kolom : 3 }},
+    baris: {{ $tableData ? $tableData->jumlah_baris : 2 }},
+    headers: {{ Illuminate\Support\Js::from($tableData ? $tableData->headers : []) }},
+    rows: {{ Illuminate\Support\Js::from($tableData ? $tableData->rows : []) }},
+
+    init() {
+        if(this.headers.length === 0) {
+            this.headers = Array(parseInt(this.kolom)).fill('');
+        }
+        if(this.rows.length === 0) {
+            this.rows = Array(parseInt(this.baris)).fill(0).map(() => Array(parseInt(this.kolom)).fill(''));
+        }
+    },
+
+    updateGrid() {
+        let k = parseInt(this.kolom) || 1;
+        let b = parseInt(this.baris) || 1;
+
+        if (this.headers.length < k) {
+            this.headers.push(...Array(k - this.headers.length).fill(''));
+        } else if (this.headers.length > k) {
+            this.headers = this.headers.slice(0, k);
+        }
+
+        this.rows = this.rows.map(row => {
+            if (row.length < k) {
+                return [...row, ...Array(k - row.length).fill('')];
+            } else {
+                return row.slice(0, k);
+            }
+        });
+
+        if (this.rows.length < b) {
+            while(this.rows.length < b) {
+                this.rows.push(Array(k).fill(''));
+            }
+        } else if (this.rows.length > b) {
+            this.rows = this.rows.slice(0, b);
+        }
+    },
+
+    hapusBaris(index) {
+        this.rows.splice(index, 1);
+        this.baris = this.rows.length;
+    },
+
+    hapusKolom(index) {
+        this.headers.splice(index, 1);
+        this.rows = this.rows.map(row => {
+            row.splice(index, 1);
+            return row;
+        });
+        this.kolom = this.headers.length;
+    }
+}">
+
+    @if(session('success_table'))
+        <div class="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-xs font-semibold border border-green-200">
+            {{ session('success_table') }}
+        </div>
+    @endif
+
+    @if($tableData)
+        <div x-show="!isEdit" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="mb-6 flex justify-between items-start">
+                <div>
+                    <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider">Halaman: {{ $menu->nama_menu }}</span>
+                    <h2 class="text-xl font-bold text-gray-800 mt-2">{{ $tableData->judul_tabel }}</h2>
+                    <p class="text-xs text-gray-400 mt-1">{{ $tableData->deskripsi_tabel ?? 'Tidak ada deskripsi.' }}</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button @click="isEdit = true" class="px-4 py-2 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-600 transition shadow-sm">
+                        ✏️ Edit Data & Struktur Tabel
+                    </button>
+                    <form action="{{ route('dynamic-table.destroy', $tableData->id) }}" method="POST" onsubmit="return confirm('Hapus total seluruh tabel beserta isinya di halaman ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition shadow-sm">
+                            🗑️ Hapus Total Tabel
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto border border-gray-100 rounded-xl">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-[#1e306e] text-white">
+                            @foreach($tableData->headers as $header)
+                                <th class="px-4 py-3 font-semibold uppercase tracking-wider border border-blue-900">{{ $header }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-600">
+                        @foreach($tableData->rows as $rowIndex => $row)
+                            <tr class="{{ $rowIndex % 2 == 0 ? 'bg-white' : 'bg-gray-50/50' }} hover:bg-blue-50/20 transition">
+                                @foreach($row as $cell)
+                                    <td class="px-4 py-3 border border-gray-100 whitespace-nowrap">{{ $cell ?? '-' }}</td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div x-show="isEdit" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" x-cloak>
+            <div class="mb-6 flex justify-between items-center border-b pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">Mode Ubah Struktur & Data Tabel</h2>
+                    <p class="text-xs text-gray-400">Silakan ubah data langsung di kotak input bawah.</p>
+                </div>
+                <button @click="isEdit = false" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs rounded-lg hover:bg-gray-200">
+                    ❌ Batalkan
+                </button>
+            </div>
+
+            <form action="{{ route('dynamic-table.update', $tableData->id) }}" method="POST" class="space-y-4">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Tabel</label>
+                        <input type="text" name="judul_tabel" value="{{ $tableData->judul_tabel }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi / Catatan Tabel</label>
+                        <input type="text" name="deskripsi_tabel" value="{{ $tableData->deskripsi_tabel }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="flex gap-4 bg-gray-50 p-3 rounded-lg border text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-600">Jumlah Kolom:</span>
+                        <input type="number" name="jumlah_kolom" x-model="kolom" @input="updateGrid()" min="1" class="w-16 p-1 border rounded text-center bg-white">
+                        <button type="button" @click="kolom++; updateGrid()" class="px-2 py-0.5 bg-blue-100 text-blue-700 font-bold rounded">+</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-600">Jumlah Baris Data:</span>
+                        <input type="number" name="jumlah_baris" x-model="baris" @input="updateGrid()" min="1" class="w-16 p-1 border rounded text-center bg-white">
+                        <button type="button" @click="baris++; updateGrid()" class="px-2 py-0.5 bg-blue-100 text-blue-700 font-bold rounded">+</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border rounded-xl max-w-full mt-4">
+                    <table class="w-full text-left border-collapse text-xs bg-white">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <template x-for="(header, hIndex) in headers" :key="'eh-'+hIndex">
+                                    <th class="p-2 border border-gray-200 min-w-[150px]">
+                                        <div class="flex flex-col gap-1">
+                                            <input type="text" name="headers[]" x-model="headers[hIndex]" class="w-full p-1.5 border border-amber-300 rounded font-bold text-center bg-amber-50 focus:outline-none shadow-sm" required>
+                                            <button type="button" @click="hapusKolom(hIndex)" class="text-[10px] text-red-500 hover:underline text-center font-normal">❌ Hapus Kolom</button>
+                                        </div>
+                                    </th>
+                                </template>
+                                <th class="w-12 bg-gray-100 border-b"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(row, rIndex) in rows" :key="'er-'+rIndex">
+                                <tr class="hover:bg-gray-50/50">
+                                    <template x-for="(cell, cIndex) in row" :key="'er-'+rIndex+'-ec-'+cIndex">
+                                        <td class="p-2 border border-gray-200">
+                                            <input type="text" :name="'rows['+rIndex+'][]'" x-model="rows[rIndex][cIndex]" class="w-full p-1.5 border border-gray-200 rounded focus:outline-none">
+                                        </td>
+                                    </template>
+                                    <td class="p-2 border border-gray-200 text-center">
+                                        <button type="button" @click="hapusBaris(rIndex)" class="text-red-500 hover:text-red-700 font-bold">❌</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-right pt-2">
+                    <button type="submit" class="bg-green-600 text-white font-bold text-xs px-6 py-2.5 rounded-lg hover:bg-green-700 transition shadow-sm">
+                        💾 Simpan Perubahan Data Tabel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    @else
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div class="mb-6">
+                <span class="px-2 py-1 bg-amber-50 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">Konfigurasi Baru</span>
+                <h2 class="text-xl font-bold text-gray-800 mt-2">Buat Tabel untuk Halaman "{{ $menu->nama_menu }}"</h2>
+                <p class="text-xs text-gray-400 mt-1">Halaman sub-menu ini belum memiliki tabel data. Tentukan jumlah baris & kolomnya.</p>
+            </div>
+
+            <form action="{{ route('dynamic-table.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <input type="hidden" name="menu_id" value="{{ $menu->id }}">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Tabel</label>
+                        <input type="text" name="judul_tabel" placeholder="Contoh: Daftar Inventaris {{ $menu->nama_menu }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi / Catatan Tabel (Opsional)</label>
+                        <input type="text" name="deskripsi_tabel" placeholder="Tulis catatan pendek..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 bg-amber-50/40 p-4 rounded-xl border border-amber-100">
+                    <div>
+                        <label class="block text-xs font-semibold text-amber-900 mb-1">Jumlah Kolom</label>
+                        <input type="number" name="jumlah_kolom" x-model="kolom" @input="updateGrid()" min="1" class="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-amber-900 mb-1">Jumlah Baris Isi</label>
+                        <input type="number" name="jumlah_baris" x-model="baris" @input="updateGrid()" min="1" class="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs focus:outline-none" required>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t pt-4">
+                    <div class="overflow-x-auto border border-gray-200 rounded-xl max-w-full">
+                        <table class="w-full text-left border-collapse bg-white text-xs">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <template x-for="(header, hIndex) in headers" :key="'nh-'+hIndex">
+                                        <th class="p-2 border border-gray-200 min-w-[140px]">
+                                            <input type="text" name="headers[]" x-model="headers[hIndex]" placeholder="Nama Kolom" class="w-full p-1.5 border border-amber-300 rounded font-bold text-gray-700 bg-amber-50 text-center focus:outline-none shadow-sm" required>
+                                        </th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(row, rIndex) in rows" :key="'nr-'+rIndex">
+                                    <tr class="hover:bg-gray-50/50">
+                                        <template x-for="(cell, cIndex) in row" :key="'nr-'+rIndex+'-nc-'+cIndex">
+                                            <td class="p-2 border border-gray-200">
+                                                <input type="text" :name="'rows['+rIndex+'][]'" x-model="rows[rIndex][cIndex]" placeholder="..." class="w-full p-1.5 border border-gray-200 rounded focus:outline-none">
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="text-right pt-4">
+                    <button type="submit" class="bg-[#1e306e] text-white font-bold text-xs px-6 py-3 rounded-lg hover:bg-blue-900 transition shadow-sm">
+                        🚀 Simpan & Kunci Tabel Di Halaman Ini
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+</div>
+@endsection

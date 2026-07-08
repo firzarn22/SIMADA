@@ -17,43 +17,80 @@
                 <h1 class="font-bold text-sm tracking-wide">SIMADA</h1>
                 <p class="text-[9px] text-blue-300 uppercase tracking-widest mt-1">Data Management</p>
             </div>
-            <nav class="p-4 space-y-1">
-                @foreach($menus->whereNull('parent_id') as $menu)
-                    @if($menu->submenus->count() > 0)
-                        <div x-data="{ open: false }">
-                            <button @click="open = !open" class="w-full flex items-center gap-2 px-3 py-2 text-blue-200 hover:bg-blue-900 rounded-lg text-sm transition text-left">
-                                <div class="w-3.5 h-3.5 text-blue-400 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-90' : ''">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
-                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <span class="block flex-1 truncate">{{ $menu->nama_menu }}</span>
-                            </button>
-
-                            <div x-show="open" class="pl-5 mt-1 space-y-1">
-                                @foreach($menu->submenus as $submenu)
-                                    <a href="{{ url($submenu->url) }}" class="flex items-start gap-2 px-3 py-2 text-blue-300 hover:text-white text-xs transition rounded-lg hover:bg-blue-900/50">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0 mt-1.5"></span>
-                                        <span class="block flex-1 whitespace-normal break-words leading-tight text-left">{{ $submenu->nama_menu }}</span>
-                                    </a>
-                                @endforeach
-                            </div>
+<nav class="p-4 space-y-1">
+    @foreach($menus->whereNull('parent_id') as $menu)
+        @if($menu->submenus->count() > 0)
+            <div x-data="{ open: false }" class="w-full group/main">
+                <div class="w-full flex items-center justify-between px-3 py-2 text-blue-200 hover:bg-blue-900 rounded-lg text-sm transition group">
+                    <button @click="open = !open" class="flex-1 flex items-center gap-3 truncate text-left focus:outline-none">
+                        <div class="w-3.5 h-3.5 text-blue-400 flex-shrink-0 transition-transform duration-200" :class="open ? 'rotate-90' : ''">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-full h-full">
+                                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                            </svg>
                         </div>
-                    @else
-                        <a href="{{ url($menu->url) }}" class="flex items-center px-3 py-2 rounded-lg hover:bg-blue-900 transition text-sm {{ request()->is(ltrim($menu->url, '/')) ? 'bg-blue-900 text-white' : 'text-blue-200' }}">
-                            <span class="block flex-1 truncate">{{ $menu->nama_menu }}</span>
-                        </a>
-                    @endif
-                @endforeach
+                        <span class="truncate font-medium group-hover:text-white">{{ $menu->nama_menu }}</span>
+                    </button>
 
-                @if(Auth::user()->role === 'superadmin')
-                    <div class="mt-8 pt-4 border-t border-blue-800">
-                        <a href="{{ route('menu.index') }}" class="block w-full py-2 bg-red-800 text-white text-center rounded-lg text-[10px] font-bold hover:bg-red-700 transition">
-                            PENGATURAN MENU
-                        </a>
-                    </div>
-                @endif
-            </nav>
+                    <form action="{{ route('menu.destroy', $menu->id) }}" method="POST" onsubmit="return confirm('Hapus menu utama ini beserta seluruh sub-menu di dalamnya?')" class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0 ml-2">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-red-400 hover:text-red-500 p-1 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <div x-show="open" x-transition class="pl-8 mt-1 space-y-1">
+                    @foreach($menu->submenus as $submenu)
+                        <div class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-blue-900/50 group/sub transition">
+                            <a href="{{ route('dynamic-table.show', $submenu->id) }}" class="flex-1 flex items-center gap-2 text-blue-300 hover:text-white truncate">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0"></span>
+                                <span class="block flex-1 truncate">{{ $submenu->nama_menu }}</span>
+                            </a>
+
+                            <form action="{{ route('menu.destroy', $submenu->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus sub-menu ini?')" class="opacity-0 group-hover/sub:opacity-100 transition-opacity duration-150 flex-shrink-0 ml-2">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-400 hover:text-red-500 p-0.5 focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @else
+            <div class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-blue-900 group transition text-sm {{ request()->is(ltrim($menu->url, '/')) ? 'bg-blue-900 text-white' : 'text-blue-200' }}">
+                <a href="{{ url($menu->url) }}" class="flex-1 flex items-center gap-3 truncate">
+                    <div class="w-3.5 h-3.5 flex-shrink-0"></div>
+                    <span class="truncate font-medium group-hover:text-white">{{ $menu->nama_menu }}</span>
+                </a>
+
+                <form action="{{ route('menu.destroy', $menu->id) }}" method="POST" onsubmit="return confirm('Hapus menu ini?')" class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0 ml-2">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-red-400 hover:text-red-500 p-1 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        @endif
+    @endforeach
+
+    @if(Auth::check() && (Auth::user()->role === 'superadmin' || Auth::user()->role === 'super'))
+        <div class="mt-6 pt-4 border-t border-blue-800">
+            <a href="{{ route('menu.index') }}" class="block w-full py-2 bg-red-800 text-white text-center rounded-lg text-[10px] font-bold hover:bg-red-700 transition tracking-wider uppercase">
+                PENGATURAN MENU
+            </a>
+        </div>
+    @endif
+</nav>
         </div>
 
         <div class="p-4 border-t border-blue-800 bg-[#1a2a60] flex-shrink-0">
