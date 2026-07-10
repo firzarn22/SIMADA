@@ -5,23 +5,25 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DynamicTable;
 use App\Models\Menu;
+use App\Models\Statistic;
 
 class DynamicTableController extends Controller
 {
-    // Fungsi yang dipanggil saat sub-menu diklik dari sidebar
+    // Fungsi untuk menampilkan tabel dan data statistik terkait
     public function show($menu_id)
     {
-        // Ambil data menu berdasarkan ID untuk tahu nama halamannya
         $menu = Menu::findOrFail($menu_id);
 
-        // Cari tahu apakah menu ini sudah pernah dibuatkan tabelnya atau belum
+        // Cari data tabel berdasarkan menu_id
         $tableData = DynamicTable::where('menu_id', $menu_id)->first();
 
-        // Kirim data menu dan data tabel ke view yang sama
-        return view('admin.view_table', compact('tableData', 'menu'));
+        // Ambil data statistik hanya yang memiliki dynamic_table_id yang sama dengan tabel yang dibuka
+        // Jika tabel belum dibuat, maka $chartData akan kosong
+        $chartData = $tableData ? Statistic::where('dynamic_table_id', $tableData->id)->get() : collect();
+
+        return view('admin.view_table', compact('tableData', 'menu', 'chartData'));
     }
 
-    // Fungsi untuk memproses penyimpanan tabel saat tombol "Simpan & Kunci" diklik
     public function store(Request $request)
     {
         $request->validate([
@@ -33,7 +35,6 @@ class DynamicTableController extends Controller
             'rows' => 'required|array',
         ]);
 
-        // Kita ambil semua input, lalu bersihkan array headers & rows agar murni array javascript
         $data = $request->all();
         $data['headers'] = array_values($request->input('headers', []));
         $data['rows'] = array_values($request->input('rows', []));
@@ -42,6 +43,7 @@ class DynamicTableController extends Controller
 
         return redirect()->back()->with('success_table', 'Tabel berhasil dibuat langsung di halaman ini!');
     }
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -54,7 +56,6 @@ class DynamicTableController extends Controller
 
         $table = DynamicTable::findOrFail($id);
 
-        // Kita paksa susun ulang array-nya agar index-nya berurutan (0, 1, 2...)
         $headers = array_values($request->input('headers', []));
         $rows = array_values($request->input('rows', []));
 
@@ -63,12 +64,13 @@ class DynamicTableController extends Controller
             'deskripsi_tabel' => $request->deskripsi_tabel,
             'jumlah_kolom' => $request->jumlah_kolom,
             'jumlah_baris' => $request->jumlah_baris,
-            'headers' => $headers, // Dikunci manual
-            'rows' => $rows,       // Dikunci manual
+            'headers' => $headers,
+            'rows' => $rows,
         ]);
 
         return redirect()->back()->with('success_table', 'Tabel berhasil diperbarui!');
     }
+
     public function destroyTable($id)
     {
         $table = DynamicTable::findOrFail($id);
@@ -76,4 +78,50 @@ class DynamicTableController extends Controller
 
         return redirect()->back()->with('success_table', 'Tabel data berhasil dihapus dari halaman ini.');
     }
+
+    public function export($menu_id)
+{
+    $tableData = \App\Models\DynamicTable::where('menu_id', $menu_id)->first();
+    $fileName = 'data_tabel_' . time() . '.csv';
+
+    $headers = array(
+        "Content-type"        => "text/csv",
+        "Content-Disposition" => "attachment; filename=$fileName",
+        "Pragma"              => "no-cache",
+        "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+        "Expires"             => "0"
+    );
+
+    $callback = function() use ($tableData) {
+        $file = fopen('php://output', 'w');
+        fputcsv($file, $tableData->headers); // Baris judul kolom
+        foreach ($tableData->rows as $row) {
+            fputcsv($file, $row); // Baris data
+        }
+        fclose($file);
+    };
+
+    return response()->stream($callback, 200, $headers);
+}
+
+public function import(Request $request, $menu_id)
+{
+    $request->validate(['file' => 'required|mimes:csv,txt']);
+
+    $file = fopen($request->file('file')->getRealPath(), 'r');
+    $headers = fgetcsv($file); // Ambil baris pertama sebagai header
+    $rows = [];
+    while (($data = fgetcsv($file)) !== FALSE) {
+        $rows[] = $data; // Ambil baris data
+    }
+    fclose($file);
+
+    $table = \App\Models\DynamicTable::where('menu_id', $menu_id)->first();
+    $table->update([
+        'headers' => $headers,
+        'rows' => $rows
+    ]);
+
+    return redirect()->back()->with('success_table', 'Data berhasil di-import!');
+}
 }

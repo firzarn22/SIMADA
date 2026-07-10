@@ -39,5 +39,9 @@ Route::delete('/admin/menu/{id}', [MenuController::class, 'destroy'])
 
     // Jalur untuk meng-update tabel dinamis yang sudah ada
 Route::put('/dynamic-table/update/{id}', [App\Http\Controllers\DynamicTableController::class, 'update'])->name('dynamic-table.update');
+
 // Jalur jika ingin menghapus seluruh tabel di halaman tersebut
 Route::delete('/dynamic-table/destroy/{id}', [App\Http\Controllers\DynamicTableController::class, 'destroyTable'])->name('dynamic-table.destroy');
+
+Route::get('dashboard/export-tabel/{menu_id}', [App\Http\Controllers\DynamicTableController::class, 'export']);
+Route::post('dashboard/import-tabel/{menu_id}', [App\Http\Controllers\DynamicTableController::class, 'import'])->name('dynamic-table.import');
