@@ -1,8 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    [x-cloak] { display: none !important; }
+</style>
 <div class="max-w-6xl mx-auto" x-data="{
+    search: '',
     isEdit: false,
+    isChartVisible: false,
+    selectedName: '',
+    chartInstance: null,
     kolom: {{ $tableData ? $tableData->jumlah_kolom : 3 }},
     baris: {{ $tableData ? $tableData->jumlah_baris : 2 }},
     headers: {{ Illuminate\Support\Js::from($tableData ? $tableData->headers : []) }},
@@ -42,6 +49,27 @@
         } else if (this.rows.length > b) {
             this.rows = this.rows.slice(0, b);
         }
+    },
+
+    showChartFor(name, value) {
+        this.isChartVisible = true;
+        this.selectedName = name;
+        this.$nextTick(() => {
+            const ctx = document.getElementById('detailChart').getContext('2d');
+            if (this.chartInstance) this.chartInstance.destroy();
+            this.chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Nilai Data'],
+                    datasets: [{
+                        label: name,
+                        data: [value],
+                        backgroundColor: '#1e306e'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        });
     },
 
     hapusBaris(index) {
@@ -114,26 +142,47 @@
         </form>
     </div>
             </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="mb-4">
+                    <input type="text"
+                        x-model="search"
+                        placeholder="🔍 Cari data di tabel..."
+                        class="w-full md:w-64 px-4 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 shadow-sm">
+                </div>
 
-            <div class="overflow-x-auto border border-gray-100 rounded-xl">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-[#1e306e] text-white">
-                            @foreach($tableData->headers as $header)
-                                <th class="px-4 py-3 font-semibold uppercase tracking-wider border border-blue-900">{{ $header }}</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-gray-600">
-                        @foreach($tableData->rows as $rowIndex => $row)
-                            <tr class="{{ $rowIndex % 2 == 0 ? 'bg-white' : 'bg-gray-50/50' }} hover:bg-blue-50/20 transition">
-                                @foreach($row as $cell)
-                                    <td class="px-4 py-3 border border-gray-100 whitespace-nowrap">{{ $cell ?? '-' }}</td>
-                                @endforeach
-                            </tr>
+    <div class="overflow-x-auto border border-gray-100 rounded-xl">
+        <table class="w-full text-left border-collapse text-xs">
+            <thead>
+                <tr class="bg-[#1e306e] text-white">
+                    @foreach($tableData->headers as $header)
+                        <th class="px-4 py-3 font-semibold uppercase tracking-wider border border-blue-900">{{ $header }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 text-gray-600">
+                @foreach($tableData->rows as $rowIndex => $row)
+                    <tr @click="showChartFor('{{ $row[0] }}', {{ is_numeric($row[1]) ? $row[1] : 0 }})"
+                        x-show="`{{ implode(' ', $row) }}`.toLowerCase().includes(search.toLowerCase())"
+                        class="{{ $rowIndex % 2 == 0 ? 'bg-white' : 'bg-gray-50/50' }} hover:bg-blue-50 cursor-pointer transition">
+
+                        @foreach($row as $cell)
+                            <td class="px-4 py-3 border border-gray-100 whitespace-nowrap">{{ $cell ?? '-' }}</td>
                         @endforeach
-                    </tbody>
-                </table>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+        <div x-show="isChartVisible"
+            x-cloak
+            class="mt-8 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-slate-700">Analisis: <span x-text="selectedName" class="text-blue-600"></span></h3>
+                <button @click="isChartVisible = false" class="text-slate-400 hover:text-slate-600 font-bold">✕ Tutup</button>
+            </div>
+            <div class="h-64">
+                <canvas id="detailChart"></canvas>
             </div>
         </div>
 

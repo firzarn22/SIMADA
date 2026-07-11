@@ -6,6 +6,7 @@
     <title>{{ $title ?? 'Dashboard' }} - SIMADA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 flex h-screen font-sans overflow-hidden">
 
