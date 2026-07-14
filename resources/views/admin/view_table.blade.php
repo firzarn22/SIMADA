@@ -51,26 +51,61 @@
         }
     },
 
-    showChartFor(name, value) {
-        this.isChartVisible = true;
-        this.selectedName = name;
-        this.$nextTick(() => {
-            const ctx = document.getElementById('detailChart').getContext('2d');
-            if (this.chartInstance) this.chartInstance.destroy();
-            this.chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Nilai Data'],
-                    datasets: [{
-                        label: name,
-                        data: [value],
-                        backgroundColor: '#1e306e'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+    showChartFor(row) {
+
+    this.isChartVisible = true;
+    this.selectedName = row[0];
+
+    let labels = this.headers.slice(1);
+
+    let values = row.slice(1).map(v => {
+
+        return isNaN(parseFloat(v))
+            ? 0
+            : parseFloat(v);
+
+    });
+
+    this.$nextTick(() => {
+
+        const ctx = document
+            .getElementById('detailChart')
+            .getContext('2d');
+
+        if(this.chartInstance){
+            this.chartInstance.destroy();
+        }
+
+        this.chartInstance = new Chart(ctx,{
+
+            type:'bar',
+
+            data:{
+
+                labels:labels,
+
+                datasets:[{
+
+                    label:row[0],
+
+                    data:values,
+
+                    backgroundColor:'#1e306e'
+
+                }]
+
+            },
+
+            options:{
+                responsive:true,
+                maintainAspectRatio:false
+            }
+
         });
-    },
+
+    });
+
+},
 
     hapusBaris(index) {
         this.rows.splice(index, 1);
@@ -100,35 +135,16 @@
                     <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider">Halaman: {{ $menu->nama_menu }}</span>
                     <h2 class="text-xl font-bold text-gray-800 mt-2">{{ $tableData->judul_tabel }}</h2>
                     <p class="text-xs text-gray-400 mt-1">{{ $tableData->deskripsi_tabel ?? 'Tidak ada deskripsi.' }}</p>
-                </div>
+        </div>
 
             <div class="flex gap-3">
-        <a href="{{ url('dashboard/export-tabel/' . $menu->id) }}"
-        class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold rounded-md transition-all duration-200 active:scale-95">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Export
-        </a>
-
-        <form action="{{ route('dynamic-table.import', $menu->id) }}" method="POST" enctype="multipart/form-data" class="flex gap-2">
-            @csrf
-            <input type="file" name="file" accept=".csv" class="hidden" id="importFile" onchange="this.form.submit()">
-            <label for="importFile" class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 text-xs font-semibold rounded-md transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Import CSV
-            </label>
-        </form>
-
-        <button @click="isEdit = true"
-                class="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 text-xs font-semibold rounded-md transition-all duration-200 active:scale-95">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit
-        </button>
+       <a href="{{ route('dynamic-table.export', $menu->id) }}"
+   class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold rounded-md transition-all duration-200 active:scale-95">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    Export CSV
+</a>
 
         <form action="{{ route('dynamic-table.destroy', $tableData->id) }}" method="POST" onsubmit="return confirm('Hapus tabel ini secara permanen?')">
             @csrf @method('DELETE')
@@ -161,7 +177,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100 text-gray-600">
                 @foreach($tableData->rows as $rowIndex => $row)
-                    <tr @click="showChartFor('{{ $row[0] }}', {{ is_numeric($row[1]) ? $row[1] : 0 }})"
+                    <tr @click='showChartFor(@json($row))'
                         x-show="`{{ implode(' ', $row) }}`.toLowerCase().includes(search.toLowerCase())"
                         class="{{ $rowIndex % 2 == 0 ? 'bg-white' : 'bg-gray-50/50' }} hover:bg-blue-50 cursor-pointer transition">
 
@@ -181,13 +197,14 @@
                 <h3 class="font-bold text-slate-700">Analisis: <span x-text="selectedName" class="text-blue-600"></span></h3>
                 <button @click="isChartVisible = false" class="text-slate-400 hover:text-slate-600 font-bold">✕ Tutup</button>
             </div>
+
             <div class="h-64">
                 <canvas id="detailChart"></canvas>
             </div>
         </div>
+        </div> <!-- TUTUP div x-show="!isEdit" -->
 
-        <div x-show="isEdit" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100" x-cloak>
-            <div class="mb-6 flex justify-between items-center border-b pb-4">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">          <div class="mb-6 flex justify-between items-center border-b pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-gray-800">Mode Ubah Struktur & Data Tabel</h2>
                     <p class="text-xs text-gray-400">Silakan ubah data langsung di kotak input bawah.</p>
@@ -208,7 +225,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Tabel</label>
-                        <input type="text" name="judul_tabel" value="{{ $tableData->judul_tabel }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none" required>
+                        <input type="text" name="judul_tabel" value="{{ $tableData->judul_tabel }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi / Catatan Tabel</label>
@@ -236,7 +253,7 @@
                                 <template x-for="(header, hIndex) in headers" :key="'eh-'+hIndex">
                                     <th class="p-2 border border-gray-200 min-w-[150px]">
                                         <div class="flex flex-col gap-1">
-                                            <input type="text" name="headers[]" x-model="headers[hIndex]" class="w-full p-1.5 border border-amber-300 rounded font-bold text-center bg-amber-50 focus:outline-none shadow-sm" required>
+                                            <input type="text" name="headers[]" x-model="headers[hIndex]" class="w-full p-1.5 border border-amber-300 rounded font-bold text-center bg-amber-50 focus:outline-none shadow-sm">
                                             <button type="button" @click="hapusKolom(hIndex)" class="text-[10px] text-red-500 hover:underline text-center font-normal">❌ Hapus Kolom</button>
                                         </div>
                                     </th>
@@ -279,11 +296,55 @@
 
     @else
         <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div class="mb-6">
-                <span class="px-2 py-1 bg-amber-50 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">Konfigurasi Baru</span>
-                <h2 class="text-xl font-bold text-gray-800 mt-2">Buat Tabel untuk Halaman "{{ $menu->nama_menu }}"</h2>
-                <p class="text-xs text-gray-400 mt-1">Halaman sub-menu ini belum memiliki tabel data. Tentukan jumlah baris & kolomnya.</p>
-            </div>
+            <div class="mb-6 flex justify-between items-start">
+
+    <div>
+        <span class="px-2 py-1 bg-amber-50 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">
+            Konfigurasi Baru
+        </span>
+
+        <h2 class="text-xl font-bold text-gray-800 mt-2">
+            Buat Tabel untuk Halaman "{{ $menu->nama_menu }}"
+        </h2>
+
+        <p class="text-xs text-gray-400 mt-1">
+            Halaman sub-menu ini belum memiliki tabel data.
+            Tentukan jumlah baris & kolomnya.
+        </p>
+    </div>
+
+    <form action="{{ route('dynamic-table.import', $menu->id) }}"
+          method="POST"
+          enctype="multipart/form-data"
+          class="flex gap-2">
+        @csrf
+
+        <input
+            type="file"
+            name="file"
+            accept=".csv"
+            class="hidden"
+            id="importExcel"
+            onchange="this.form.submit()">
+
+        <label for="importExcel"
+               class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold rounded-md transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="w-4 h-4"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+
+            Import CSV
+        </label>
+    </form>
+
+</div>
 
             <form action="{{ route('dynamic-table.store') }}" method="POST" class="space-y-4">
                 @csrf
@@ -292,7 +353,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Tabel</label>
-                        <input type="text" name="judul_tabel" placeholder="Contoh: Daftar Inventaris {{ $menu->nama_menu }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500" required>
+                        <input type="text" name="judul_tabel" placeholder="Contoh: Daftar Inventaris {{ $menu->nama_menu }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi / Catatan Tabel (Opsional)</label>
@@ -303,11 +364,11 @@
                 <div class="grid grid-cols-2 gap-4 bg-amber-50/40 p-4 rounded-xl border border-amber-100">
                     <div>
                         <label class="block text-xs font-semibold text-amber-900 mb-1">Jumlah Kolom</label>
-                        <input type="number" name="jumlah_kolom" x-model="kolom" @input="updateGrid()" min="1" class="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs focus:outline-none" required>
+                        <input type="number" name="jumlah_kolom" x-model="kolom" @input="updateGrid()" min="1" class="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs focus:outline-none" >
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-amber-900 mb-1">Jumlah Baris Isi</label>
-                        <input type="number" name="jumlah_baris" x-model="baris" @input="updateGrid()" min="1" class="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs focus:outline-none" required>
+                        <input type="number" name="jumlah_baris" x-model="baris" @input="updateGrid()" min="1" class="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs focus:outline-none" >
                     </div>
                 </div>
 
@@ -318,7 +379,7 @@
                                 <tr>
                                     <template x-for="(header, hIndex) in headers" :key="'nh-'+hIndex">
                                         <th class="p-2 border border-gray-200 min-w-[140px]">
-                                            <input type="text" name="headers[]" x-model="headers[hIndex]" placeholder="Nama Kolom" class="w-full p-1.5 border border-amber-300 rounded font-bold text-gray-700 bg-amber-50 text-center focus:outline-none shadow-sm" required>
+                                            <input type="text" name="headers[]" x-model="headers[hIndex]" placeholder="Nama Kolom" class="w-full p-1.5 border border-amber-300 rounded font-bold text-gray-700 bg-amber-50 text-center focus:outline-none shadow-sm">
                                         </th>
                                     </template>
                                 </tr>

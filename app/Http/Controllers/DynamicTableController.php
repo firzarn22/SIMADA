@@ -7,6 +7,7 @@ use App\Models\DynamicTable;
 use App\Models\Menu;
 use App\Models\Statistic;
 
+
 class DynamicTableController extends Controller
 {
     // Fungsi untuk menampilkan tabel dan data statistik terkait
@@ -79,49 +80,148 @@ class DynamicTableController extends Controller
         return redirect()->back()->with('success_table', 'Tabel data berhasil dihapus dari halaman ini.');
     }
 
-    public function export($menu_id)
+   public function export($menu_id)
 {
-    $tableData = \App\Models\DynamicTable::where('menu_id', $menu_id)->first();
-    $fileName = 'data_tabel_' . time() . '.csv';
+    $table = DynamicTable::where('menu_id', $menu_id)->firstOrFail();
 
-    $headers = array(
-        "Content-type"        => "text/csv",
-        "Content-Disposition" => "attachment; filename=$fileName",
-        "Pragma"              => "no-cache",
-        "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-        "Expires"             => "0"
-    );
+    $filename = 'Data_' . date('YmdHis') . '.csv';
 
-    $callback = function() use ($tableData) {
-        $file = fopen('php://output', 'w');
-        fputcsv($file, $tableData->headers); // Baris judul kolom
-        foreach ($tableData->rows as $row) {
-            fputcsv($file, $row); // Baris data
+    return response()->streamDownload(function () use ($table) {
+
+        $output = fopen('php://output', 'w');
+
+        // Tambahkan UTF-8 BOM agar Excel membaca karakter dengan benar
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        // Header
+        fputcsv($output, $table->headers, ';');
+
+        // Data
+        foreach ($table->rows as $row) {
+            fputcsv($output, $row, ';');
         }
-        fclose($file);
-    };
 
-    return response()->stream($callback, 200, $headers);
+        fclose($output);
+
+    }, $filename, [
+        'Content-Type' => 'text/csv; charset=UTF-8',
+        'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+    ]);
 }
 
 public function import(Request $request, $menu_id)
 {
-    $request->validate(['file' => 'required|mimes:csv,txt']);
-
-    $file = fopen($request->file('file')->getRealPath(), 'r');
-    $headers = fgetcsv($file); // Ambil baris pertama sebagai header
-    $rows = [];
-    while (($data = fgetcsv($file)) !== FALSE) {
-        $rows[] = $data; // Ambil baris data
-    }
-    fclose($file);
-
-    $table = \App\Models\DynamicTable::where('menu_id', $menu_id)->first();
-    $table->update([
-        'headers' => $headers,
-        'rows' => $rows
+    $request->validate([
+        'file' => 'required|mimes:csv,txt',
     ]);
 
-    return redirect()->back()->with('success_table', 'Data berhasil di-import!');
+    $file = fopen($request->file('file')->getRealPath(), 'r');
+
+// Deteksi delimiter CSV (',' atau ';')
+$firstLine = fgets($file);
+rewind($file);
+
+$delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',')
+    ? ';'
+    : ',';
+
+// Ambil header
+$headers = fgetcsv($file, 1000, $delimiter);
+
+$rows = [];
+
+while (($data = fgetcsv($file, 1000, $delimiter)) !== false) {
+    $rows[] = $data;
+}
+
+fclose($file);
+
+    // Cari apakah tabel sudah ada
+    $table = DynamicTable::where('menu_id', $menu_id)->first();
+
+    if ($table) {
+
+        // Kalau sudah ada -> update
+        $table->update([
+            'headers' => $headers,
+            'rows' => $rows,
+            'jumlah_kolom' => count($headers),
+            'jumlah_baris' => count($rows),
+        ]);
+
+    } else {
+
+        // Kalau belum ada -> buat baru
+        DynamicTable::create([
+            'menu_id' => $menu_id,
+            'judul_tabel' => pathinfo(
+                $request->file('file')->getClientOriginalName(),
+                PATHINFO_FILENAME
+            ),
+            'deskripsi_tabel' => 'Import CSV',
+            'jumlah_kolom' => count($headers),
+            'jumlah_baris' => count($rows),
+            'headers' => $headers,
+            'rows' => $rows,
+        ]);
+    }
+
+    return redirect()
+        ->route('dynamic-table.show', $menu_id)
+        ->with('success_table', 'CSV berhasil diimport.');
+}
+
+public function chart($id)
+{
+    $table = DynamicTable::findOrFail($id);
+
+    $headers = json_decode($table->headers, true);
+    $rows = json_decode($table->rows, true);
+
+    if (!$headers || !$rows) {
+        return back()->with('error','Tidak ada data.');
+    }
+
+    $labelColumn = $headers[0];
+
+    $labels = [];
+    $datasets = [];
+
+    foreach ($headers as $header){
+
+        if($header == $labelColumn){
+            continue;
+        }
+
+        $datasets[$header]=[
+            'label'=>$header,
+            'data'=>[]
+        ];
+    }
+
+    foreach($rows as $row){
+
+        $labels[] = $row[$labelColumn] ?? '';
+
+        foreach($datasets as $key=>&$dataset){
+
+            $dataset['data'][] =
+                isset($row[$key]) && is_numeric($row[$key])
+                ? (float)$row[$key]
+                : 0;
+
+        }
+
+    }
+
+    return view(
+        'dynamic_tables.chart',
+        compact(
+            'table',
+            'labels',
+            'datasets'
+        )
+    );
+
 }
 }

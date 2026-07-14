@@ -12,17 +12,41 @@ class UserSeeder extends Seeder
     {
         // 1. Akun untuk Super Admin
         User::updateOrInsert(
-            ['email' => 'superadmin@dishub.go.id'],
+            ['email' => 'LLA@dishub.go.id'],
             [
-                'name' => 'Super Admin SIMADA',
-                'password' => Hash::make('admin123'),
+                'name' => 'Admin LLA SIMADA',
+                'password' => Hash::make('LLA123'),
                 'role' => 'superadmin',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
         );
 
-        // 2. Akun untuk Operator
+        // 2. Akun untuk Admin Perparkiran
+        User::updateOrInsert(
+            ['email' => 'Perparkiran@dishub.go.id'],
+            [
+                'name' => 'Admin Perparkiran SIMADA',
+                'password' => Hash::make('Perparkiran123'),
+                'role' => 'superadmin',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // 3. Akun untuk Admin Sapras
+        User::updateOrInsert(
+            ['email' => 'Sapras@dishub.go.id'],
+            [
+                'name' => 'Admin Sapras SIMADA',
+                'password' => Hash::make('Sapras123'),
+                'role' => 'superadmin',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        // 4. Akun untuk Operator
         User::updateOrInsert(
             ['email' => 'operator@dishub.go.id'],
             [

@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LlaController;
 use App\Http\Controllers\DynamicTableController;
 use App\Http\Controllers\MenuController;
 
@@ -12,8 +11,6 @@ Route::get('/', function () {
     return view('login');
 });
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth');
-
-Route::get('/lla', [LlaController::class, 'index'])->name('lla.index');
 
 Route::get('/admin/menu', [App\Http\Controllers\MenuController::class, 'index'])->name('menu.index');
 
@@ -43,5 +40,21 @@ Route::put('/dynamic-table/update/{id}', [App\Http\Controllers\DynamicTableContr
 // Jalur jika ingin menghapus seluruh tabel di halaman tersebut
 Route::delete('/dynamic-table/destroy/{id}', [App\Http\Controllers\DynamicTableController::class, 'destroyTable'])->name('dynamic-table.destroy');
 
-Route::get('dashboard/export-tabel/{menu_id}', [App\Http\Controllers\DynamicTableController::class, 'export']);
-Route::post('dashboard/import-tabel/{menu_id}', [App\Http\Controllers\DynamicTableController::class, 'import'])->name('dynamic-table.import');
+// Export Excel
+Route::get(
+    'dashboard/export-tabel/{menu_id}',
+    [DynamicTableController::class, 'export']
+)->name('dynamic-table.export');
+
+// Import Excel
+Route::post(
+    'dashboard/import-tabel/{menu_id}',
+    [DynamicTableController::class, 'import']
+)->name('dynamic-table.import');
+
+Route::put('/dynamic-table/{id}', [DynamicTableController::class, 'update'])
+    ->name('dynamic-table.update');
+
+Route::get('/dynamic-table/{id}/chart',
+    [DynamicTableController::class,'chart'])
+    ->name('dynamic-table.chart');
