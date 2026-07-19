@@ -87,7 +87,7 @@
     @if(Auth::check() && (Auth::user()->role === 'superadmin' || Auth::user()->role === 'super'))
         <div class="mt-6 pt-4 border-t border-blue-800">
             <a href="{{ route('menu.index') }}" class="block w-full py-2 bg-red-800 text-white text-center rounded-lg text-[10px] font-bold hover:bg-red-700 transition tracking-wider uppercase">
-                PENGATURAN MENU
+                TAMBAH DATA
             </a>
         </div>
     @endif

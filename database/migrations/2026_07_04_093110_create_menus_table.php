@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nama_menu');
             $table->string('url');
             $table->string('icon')->nullable();
+            $table->unsignedBigInteger('parent_id')->nullable();
             $table->timestamps();
 });
     }

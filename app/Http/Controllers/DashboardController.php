@@ -2,14 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Statistic; // <-- WAJIB: panggil model Statistic
+use App\Models\Menu;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-       $stats = \App\Models\Statistic::all();
+        // Ambil data menu
+        $menus = Menu::whereNull('parent_id')->with('submenus')->get();
 
-        return view('dashboard', compact('stats'));
+        // Paksa isi $stats dengan data kosong agar tidak error
+        $stats = [
+            (object)['label' => 'Data LLA', 'jumlah' => 0],
+            (object)['label' => 'Data Sarpras', 'jumlah' => 0],
+            (object)['label' => 'Data Parkir', 'jumlah' => 0],
+            (object)['label' => 'Aktivitas', 'jumlah' => 0],
+        ];
+
+        return view('dashboard', compact('menus', 'stats'));
     }
 }

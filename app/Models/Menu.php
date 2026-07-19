@@ -17,4 +17,8 @@ class Menu extends Model
     public function dynamicTable() {
         return $this->hasOne(DynamicTable::class, 'menu_id');
     }
+
+    public function parent() {
+        return $this->belongsTo(Menu::class, 'parent_id');
+}
 }

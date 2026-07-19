@@ -25,7 +25,7 @@
                 </select>
             </div>
             <button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 text-sm transition shadow-sm">
-                Simpan Menu
+                Simpan
             </button>
         </form>
     </div>
