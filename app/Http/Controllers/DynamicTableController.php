@@ -27,6 +27,9 @@ class DynamicTableController extends Controller
 
     public function store(Request $request)
     {
+        if (!in_array(auth()->user()->role, ['superadmin', 'operator'])) {
+            abort(403, 'Akses ditolak!');
+    }
         $request->validate([
             'menu_id' => 'required',
             'judul_tabel' => 'required|string|max:255',
@@ -47,6 +50,9 @@ class DynamicTableController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!in_array(auth()->user()->role, ['superadmin', 'operator'])) {
+            abort(403, 'Akses ditolak!');
+        }
         $request->validate([
             'judul_tabel' => 'required|string|max:255',
             'jumlah_kolom' => 'required|integer|min:1',
@@ -74,6 +80,9 @@ class DynamicTableController extends Controller
 
     public function destroyTable($id)
     {
+        if (auth()->user()->role !== 'superadmin') {
+        abort(403, 'Akses ditolak!');
+    }
         $table = DynamicTable::findOrFail($id);
         $table->delete();
 
@@ -111,6 +120,9 @@ class DynamicTableController extends Controller
 
 public function import(Request $request, $menu_id)
 {
+    if (!in_array(auth()->user()->role, ['superadmin', 'operator'])) {
+        abort(403, 'Akses ditolak!');
+    }
     $request->validate([
         'file' => 'required|mimes:csv,txt',
     ]);

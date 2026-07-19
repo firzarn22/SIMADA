@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth; // Jangan lupa tambahkan ini!
 class MenuController extends Controller
 {
     public function index() {
-            if (Auth::user()->role !== 'superadmin') {
+            if (!in_array(Auth::user()->role, ['superadmin', 'operator'])) {
         return redirect()->route('dashboard')->with('error', 'Akses ditolak!');
     }
 
@@ -19,9 +19,8 @@ class MenuController extends Controller
     }
 
     public function store(Request $request) {
-        // HANYA Super Admin yang boleh menambah/mengubah struktur menu
-        if (Auth::user()->role !== 'superadmin') {
-            return abort(403, 'Akses ditolak! Hanya Super Admin yang bisa menambah menu.');
+        if (!in_array(Auth::user()->role, ['superadmin', 'operator'])) {
+            return abort(403, 'Akses ditolak!');
         }
 
         Menu::create($request->validate([
@@ -35,6 +34,9 @@ class MenuController extends Controller
 
    public function destroy($id)
 {
+    if(Auth::user()->role !== 'superadmin') {
+        abort(403, 'Akses ditolak!');
+    }
     $menu = Menu::findOrFail($id);
 
     // Hapus semua submenu

@@ -19,13 +19,15 @@ class DynamicTable extends Model
         'deskripsi_tabel',
         'jumlah_kolom',
         'jumlah_baris',
-        'headers', // <-- Ini wajib ada!
+        'headers',
+        'header_levels',
         'rows'
     ];
 
     // 2. PASTIKAN 'headers' JUGA SUDAH DI-CAST MENJADI ARRAY DI BAWAH INI
     protected $casts = [
         'headers' => 'array', // <-- Ini wajib ada!
+        'header_levels' => 'array',
         'rows' => 'array'
     ];
 

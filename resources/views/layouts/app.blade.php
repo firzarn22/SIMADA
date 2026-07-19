@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Facades\Auth;
+@endphp
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -32,7 +36,10 @@
                         <span class="truncate font-medium group-hover:text-white">{{ $menu->nama_menu }}</span>
                     </button>
 
-                    <form action="{{ route('menu.destroy', $menu->id) }}" method="POST" onsubmit="return confirm('Hapus menu utama ini beserta seluruh sub-menu di dalamnya?')" class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0 ml-2">
+                    @if(Auth::user()->role == 'superadmin')
+                    <form action="{{ route('menu.destroy', $menu->id) }}" method="POST"
+                        onsubmit="return confirm('Hapus menu utama ini beserta seluruh sub-menu di dalamnya?')"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-red-400 hover:text-red-500 p-1 focus:outline-none">
@@ -41,6 +48,7 @@
                             </svg>
                         </button>
                     </form>
+                    @endif
                 </div>
 
                 <div x-show="open" x-transition class="pl-8 mt-1 space-y-1">
@@ -51,7 +59,10 @@
                                 <span class="block flex-1 truncate">{{ $submenu->nama_menu }}</span>
                             </a>
 
-                            <form action="{{ route('menu.destroy', $submenu->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus sub-menu ini?')" class="opacity-0 group-hover/sub:opacity-100 transition-opacity duration-150 flex-shrink-0 ml-2">
+                            @if(Auth::user()->role == 'superadmin')
+                            <form action="{{ route('menu.destroy', $submenu->id) }}" method="POST"
+                                onsubmit="return confirm('Hapus sub-menu ini?')""
+                                class="opacity-0 group-hover/sub:opacity-100 transition-opacity duration-150">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-400 hover:text-red-500 p-0.5 focus:outline-none">
@@ -60,6 +71,7 @@
                                     </svg>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -71,7 +83,9 @@
                     <span class="truncate font-medium group-hover:text-white">{{ $menu->nama_menu }}</span>
                 </a>
 
-                <form action="{{ route('menu.destroy', $menu->id) }}" method="POST" onsubmit="return confirm('Hapus menu ini?')" class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0 ml-2">
+                @if(Auth::user()->role == 'superadmin')
+                <form action="{{ route('menu.destroy', $menu->id) }}" method="POST"
+                    onsubmit="return confirm('Yakin ingin menghapus menu ini?')">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-red-400 hover:text-red-500 p-1 focus:outline-none">
@@ -80,14 +94,15 @@
                         </svg>
                     </button>
                 </form>
+                @endif
             </div>
         @endif
     @endforeach
 
-    @if(Auth::check() && (Auth::user()->role === 'superadmin' || Auth::user()->role === 'super'))
+    @if(Auth::check() && in_array(Auth::user()->role, ['superadmin', 'operator']))
         <div class="mt-6 pt-4 border-t border-blue-800">
             <a href="{{ route('menu.index') }}" class="block w-full py-2 bg-red-800 text-white text-center rounded-lg text-[10px] font-bold hover:bg-red-700 transition tracking-wider uppercase">
-                PENGATURAN MENU
+                Tambah Data
             </a>
         </div>
     @endif

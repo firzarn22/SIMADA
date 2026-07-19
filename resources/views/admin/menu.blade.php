@@ -12,6 +12,7 @@
             </div>
         @endif
 
+        @if(in_array(Auth::user()->role, ['superadmin', 'operator']))
         <form action="{{ route('menu.store') }}" method="POST" class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -25,9 +26,10 @@
                 </select>
             </div>
             <button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 text-sm transition shadow-sm">
-                Simpan Menu
+                Simpan
             </button>
         </form>
+        @endif
     </div>
 </div>
 @endsection

@@ -6,7 +6,6 @@
 </style>
 <div class="max-w-6xl mx-auto" x-data="{
     search: '',
-    isEdit: false,
     isChartVisible: false,
     selectedName: '',
     chartInstance: null,
@@ -54,7 +53,7 @@
     showChartFor(row) {
 
     this.isChartVisible = true;
-    this.selectedName = row[0];
+    this.selectedName = row[1];
 
     let labels = this.headers.slice(1);
 
@@ -86,7 +85,7 @@
 
                 datasets:[{
 
-                    label:row[0],
+                    label:row[1],
 
                     data:values,
 
@@ -129,7 +128,7 @@
     @endif
 
     @if($tableData)
-        <div x-show="!isEdit" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div class="mb-6 flex justify-between items-start">
                 <div>
                     <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider">Halaman: {{ $menu->nama_menu }}</span>
@@ -146,8 +145,11 @@
     Export CSV
 </a>
 
+        @if(Auth::user()->role == 'superadmin')
         <form action="{{ route('dynamic-table.destroy', $tableData->id) }}" method="POST" onsubmit="return confirm('Hapus tabel ini secara permanen?')">
-            @csrf @method('DELETE')
+            @csrf
+
+            @method('DELETE')
             <button type="submit"
                     class="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 text-xs font-semibold rounded-md transition-all duration-200 active:scale-95">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -156,6 +158,7 @@
                 Hapus
             </button>
         </form>
+        @endif
     </div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -204,18 +207,13 @@
         </div>
         </div> <!-- TUTUP div x-show="!isEdit" -->
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">          <div class="mb-6 flex justify-between items-center border-b pb-4">
+        @if(in_array(Auth::user()->role, ['superadmin', 'operator']))
+        <div  class="bg-white p-6 mt-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="mb-6 flex justify-between items-center border-b pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-gray-800">Mode Ubah Struktur & Data Tabel</h2>
                     <p class="text-xs text-gray-400">Silakan ubah data langsung di kotak input bawah.</p>
                 </div>
-               <button @click="isEdit = false"
-                    class="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 text-xs font-semibold rounded-md transition-all duration-200 active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Batalkan
-            </button>
             </div>
 
             <form action="{{ route('dynamic-table.update', $tableData->id) }}" method="POST" class="space-y-4">
@@ -293,6 +291,7 @@
                 </div>
             </form>
         </div>
+        @endif
 
     @else
         <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
@@ -313,6 +312,7 @@
         </p>
     </div>
 
+    @if(in_array(Auth::user()->role, ['superadmin', 'operator']))
     <form action="{{ route('dynamic-table.import', $menu->id) }}"
           method="POST"
           enctype="multipart/form-data"
@@ -343,9 +343,11 @@
             Import CSV
         </label>
     </form>
+    @endif
 
 </div>
 
+            @if(in_array(Auth::user()->role, ['superadmin', 'operator']))
             <form action="{{ route('dynamic-table.store') }}" method="POST" class="space-y-4">
                 @csrf
                 <input type="hidden" name="menu_id" value="{{ $menu->id }}">
@@ -411,6 +413,8 @@
             </form>
         </div>
     @endif
+
+@endif
 
 </div>
 @endsection
