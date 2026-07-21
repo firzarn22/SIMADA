@@ -72,6 +72,7 @@ class DynamicTableController extends Controller
             'jumlah_kolom' => $request->jumlah_kolom,
             'jumlah_baris' => $request->jumlah_baris,
             'headers' => $headers,
+            'header_levels' => $table->header_levels,
             'rows' => $rows,
         ]);
 
@@ -123,37 +124,72 @@ public function import(Request $request, $menu_id)
     if (!in_array(auth()->user()->role, ['superadmin', 'operator'])) {
         abort(403, 'Akses ditolak!');
     }
+
     $request->validate([
         'file' => 'required|mimes:csv,txt',
     ]);
 
     $file = fopen($request->file('file')->getRealPath(), 'r');
 
-// Deteksi delimiter CSV (',' atau ';')
-$firstLine = fgets($file);
-rewind($file);
+    // Deteksi delimiter
+    $firstLine = fgets($file);
+    rewind($file);
 
-$delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',')
-    ? ';'
-    : ',';
+    $delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',')
+        ? ';'
+        : ',';
 
-// Ambil header
-$headers = fgetcsv($file, 1000, $delimiter);
+    $header1 = fgetcsv($file, 1000, $delimiter);
 
-$rows = [];
+$pos = ftell($file);
+$header2 = fgetcsv($file, 1000, $delimiter);
 
-while (($data = fgetcsv($file, 1000, $delimiter)) !== false) {
-    $rows[] = $data;
+$isDataRow = isset($header2[0]) &&
+    (is_numeric(str_replace('.', '', $header2[0])) ||
+     preg_match('/^\d+\.?$/', trim($header2[0])));
+
+if ($isDataRow) {
+
+    // ===== HEADER 1 BARIS =====
+    $headers = $header1;
+
+    fseek($file, $pos);
+
+} else {
+
+    // ===== HEADER 2 / 3 BARIS =====
+    $headers = [];
+
+    for ($i = 0; $i < count($header1); $i++) {
+
+        $main = trim($header1[$i] ?? '');
+        $sub  = trim($header2[$i] ?? '');
+
+        if ($main != '' && $sub != '') {
+            $headers[] = $main . ' ' . $sub;
+        } elseif ($main != '') {
+            $headers[] = $main;
+        } else {
+            $headers[] = $sub;
+        }
+    }
+
 }
 
-fclose($file);
+    // Ambil isi data
+    $rows = [];
+
+    while (($data = fgetcsv($file, 1000, $delimiter)) !== false) {
+        $rows[] = $data;
+    }
+
+    fclose($file);
 
     // Cari apakah tabel sudah ada
     $table = DynamicTable::where('menu_id', $menu_id)->first();
 
     if ($table) {
 
-        // Kalau sudah ada -> update
         $table->update([
             'headers' => $headers,
             'rows' => $rows,
@@ -163,7 +199,6 @@ fclose($file);
 
     } else {
 
-        // Kalau belum ada -> buat baru
         DynamicTable::create([
             'menu_id' => $menu_id,
             'judul_tabel' => pathinfo(

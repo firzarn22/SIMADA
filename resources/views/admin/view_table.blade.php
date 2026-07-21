@@ -52,6 +52,9 @@
 
     showChartFor(row) {
 
+    console.log(this.headers);
+    console.log(row);
+
     this.isChartVisible = true;
     this.selectedName = row[1];
 
@@ -133,7 +136,9 @@
                 <div>
                     <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider">Halaman: {{ $menu->nama_menu }}</span>
                     <h2 class="text-xl font-bold text-gray-800 mt-2">{{ $tableData->judul_tabel }}</h2>
-                    <p class="text-xs text-gray-400 mt-1">{{ $tableData->deskripsi_tabel ?? 'Tidak ada deskripsi.' }}</p>
+                    <p class="text-xs text-gray-400 mt-1 whitespace-pre-line">
+                        {{ $tableData->deskripsi_tabel ?? 'Tidak ada deskripsi.' }}
+                    </p>
         </div>
 
             <div class="flex gap-3">
@@ -227,7 +232,9 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi / Catatan Tabel</label>
-                        <input type="text" name="deskripsi_tabel" value="{{ $tableData->deskripsi_tabel }}" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none">
+                        <textarea name="deskripsi_tabel"
+                            rows="4"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none">{{ $tableData->deskripsi_tabel }}</textarea>
                     </div>
                 </div>
 
@@ -359,7 +366,10 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi / Catatan Tabel (Opsional)</label>
-                        <input type="text" name="deskripsi_tabel" placeholder="Tulis catatan pendek..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+                        <textarea name="deskripsi_tabel"
+                                rows="4"
+                                placeholder="Tulis catatan..."
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-blue-500"></textarea>
                     </div>
                 </div>
 
